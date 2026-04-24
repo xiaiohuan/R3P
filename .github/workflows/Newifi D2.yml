@@ -7,9 +7,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     env:
-      # 临时解决 Node.js 弃用警告
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      # 时区
+      # 临时解决 Node.js 20 弃用警告
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       TZ: Asia/Shanghai
     steps:
       - name: Checkout
@@ -41,4 +40,3 @@ jobs:
         run: |
           cd lede
           make -j$(nproc) V=s
-
