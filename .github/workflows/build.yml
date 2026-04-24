@@ -21,12 +21,12 @@ jobs:
       - name: Copy config
         run: |
           cp .config lede/
-          cp diy-part1.sh lede/
-          cp diy-part2.sh lede/
 
-      - name: Build
+      - name: Build firmware
         run: |
           cd lede
+          cp ../diy-part1.sh ./
+          cp ../diy-part2.sh ./
           chmod +x diy-part1.sh diy-part2.sh
           ./diy-part1.sh
           ./diy-part2.sh
