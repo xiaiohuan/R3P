@@ -1,3 +1,2 @@
 #!/bin/bash
-sed -i '$a src-git passwall https://github.com/xiaorouji/openwrt-passwall' feeds.conf.default
-sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
+# 不添加任何第三方插件源，只用LEDE官方源
