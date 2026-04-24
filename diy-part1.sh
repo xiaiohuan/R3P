@@ -1,9 +1,11 @@
 #!/bin/bash
-# 仅添加兼容4.4内核的必要源
+# 清空默认feeds
 sed -i 's/^src-git/#src-git/g' feeds.conf.default
+
+# 官方基础源 + 兼容最新LEDE的Argon主题源
 echo 'src-git lede https://github.com/coolsnowwolf/lede' >> feeds.conf.default
-echo 'src-git packages https://github.com/openwrt/packages.git^openwrt-21.02' >> feeds.conf.default
-echo 'src-git luci https://github.com/openwrt/luci.git^openwrt-21.02' >> feeds.conf.default
+echo 'src-git packages https://github.com/openwrt/packages.git^master' >> feeds.conf.default
+echo 'src-git luci https://github.com/openwrt/luci.git^master' >> feeds.conf.default
 echo 'src-git argon https://github.com/jerrykuku/luci-theme-argon.git' >> feeds.conf.default
 
 ./scripts/feeds update -a
