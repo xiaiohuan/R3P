@@ -5,22 +5,26 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt update -y
-          sudo apt install -y build-essential libncurses5-dev git flex bison python3 swig unzip
+          sudo apt install -y build-essential libncurses5-dev git flex bison python3 swig
 
-      - name: Copy config & scripts
+      - name: Clone LEDE
+        run: git clone --depth 1 https://github.com/coolsnowwolf/lede.git
+
+      - name: Copy config
         run: |
           cp .config lede/
-          cp diy-part*.sh lede/
+          cp diy-part1.sh lede/
+          cp diy-part2.sh lede/
 
-      - name: Build firmware
+      - name: Build
         run: |
           cd lede
           chmod +x diy-part1.sh diy-part2.sh
