@@ -1,33 +1,30 @@
 name: Build Newifi D2
-
 on:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-22.04
     env:
-      # 临时解决 Node.js 20 弃用警告
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       TZ: Asia/Shanghai
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev libssl-dev \
-            git-core wget curl unzip bzip2 flex bison patch perl \
-            python3 python3-distutils libxml-parser-perl
+          sudo apt-get install -y build-essential libncurses5-dev libssl-dev git-core wget curl unzip bzip2 flex bison patch perl python3 python3-distutils libxml-parser-perl
 
-      - name: Clone LEDE source
+      - name: Clone LEDE & prepare files
         run: |
-          git clone https://github.com/coolsnowwolf/lede.git lede
+          git clone --depth 1 https://github.com/coolsnowwolf/lede.git lede
           cd lede
           cp ../diy-part1.sh .
           cp ../diy-part2.sh .
           cp ../.config .
+          # 关键：直接给脚本加执行权限
+          chmod +x diy-part1.sh diy-part2.sh
           ./diy-part1.sh
 
       - name: Pre-config
