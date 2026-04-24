@@ -1,0 +1,37 @@
+name: Build LEDE R3P
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y build-essential libncurses5-dev git flex bison python3 swig unzip
+
+      - name: Copy config & scripts
+        run: |
+          cp .config lede/
+          cp diy-part*.sh lede/
+
+      - name: Build firmware
+        run: |
+          cd lede
+          chmod +x diy-part1.sh diy-part2.sh
+          ./diy-part1.sh
+          ./diy-part2.sh
+          make defconfig
+          make download -j4
+          make -j$(nproc)
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: R3P-LEDE-Firmware
+          path: lede/bin/targets/ramips/mt7621/*.bin
