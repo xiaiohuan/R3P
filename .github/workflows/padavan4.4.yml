@@ -1,0 +1,74 @@
+name: 新路由3 Padavan4.4 全能版(科学上网+校园网+DDNS)
+on:
+  workflow_dispatch:
+
+env:
+  PADAVAN_URL: https://github.com/fightroad/Padavan-KVR.git
+  PADAVAN_BRANCH: master
+  ROUTER_IP: 192.168.99.1
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 拉取仓库
+        uses: actions/checkout@v4
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt update -y
+          sudo apt install -y build-essential libncurses5-dev git libssl-dev python3 unzip curl wget rsync bison flex libelf-dev
+
+      - name: 克隆老毛子4.4源码
+        run: |
+          git clone -b $PADAVAN_BRANCH $PADAVAN_URL padavan
+          cd padavan
+
+      - name: 生成新路由3默认配置
+        run: |
+          cd padavan
+          ./configs/scripts/generate_config.sh newifi3
+
+      - name: 一键开启全部功能
+        run: |
+          cd padavan
+          # 修改后台IP 192.168.99.1
+          sed -i 's/192.168.123.1/'$ROUTER_IP'/g' configs/.config
+
+          # USB全套
+          sed -i 's/# CONFIG_USB_PRINTER is not set/CONFIG_USB_PRINTER=y/g' configs/.config
+          sed -i 's/# CONFIG_USB_NET is not set/CONFIG_USB_NET=y/g' configs/.config
+          sed -i 's/# CONFIG_USB3 is not set/CONFIG_USB3=y/g' configs/.config
+          sed -i 's/# CONFIG_SAMBA is not set/CONFIG_SAMBA=y/g' configs/.config
+
+          # 无线满速
+          sed -i 's/# CONFIG_WIFI_POWER_FULL is not set/CONFIG_WIFI_POWER_FULL=y/g' configs/.config
+
+          # 科学上网全套
+          sed -i 's/# CONFIG_SHADOWSOCKS is not set/CONFIG_SHADOWSOCKS=y/g' configs/.config
+          sed -i 's/# CONFIG_V2RAY is not set/CONFIG_V2RAY=y/g' configs/.config
+          sed -i 's/# CONFIG_TROJAN is not set/CONFIG_TROJAN=y/g' configs/.config
+          sed -i 's/# CONFIG_CLASH is not set/CONFIG_CLASH=y/g' configs/.config
+
+          # 校园网认证
+          sed -i 's/# CONFIG_CAMPUS_NET is not set/CONFIG_CAMPUS_NET=y/g' configs/.config
+          sed -i 's/# CONFIG_WEB_AUTH is not set/CONFIG_WEB_AUTH=y/g' configs/.config
+
+          # DDNS 动态域名全服务商
+          sed -i 's/# CONFIG_DDNS is not set/CONFIG_DDNS=y/g' configs/.config
+          sed -i 's/# CONFIG_DDNS_ALI is not set/CONFIG_DDNS_ALI=y/g' configs/.config
+          sed -i 's/# CONFIG_DDNS_CLOUDFLARE is not set/CONFIG_DDNS_CLOUDFLARE=y/g' configs/.config
+
+          # 多WAN、负载均衡
+          sed -i 's/# CONFIG_MULTI_WAN is not set/CONFIG_MULTI_WAN=y/g' configs/.config
+
+      - name: 编译固件
+        run: |
+          cd padavan
+          make -j$(nproc)
+
+      - name: 上传固件
+        uses: actions/upload-artifact@v4
+        with:
+          name: 新路由3_Padavan4.4_科学上网_校园网_DDNS全能版
+          path: padavan/bin/*.trx
