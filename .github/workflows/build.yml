@@ -1,0 +1,100 @@
+name: 编译新路由3-LEDE全能版
+
+on:
+  workflow_dispatch:
+
+env:
+  # LEDE 官方源码
+  LEDE_URL: https://github.com/coolsnowwolf/lede
+  LEDE_BRANCH: master
+  # 固件后台IP
+  ROUTER_IP: 192.168.99.1
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@main
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libncurses5-dev git time libssl-dev python3-pip unzip curl wget rsync
+
+      - name: 克隆 LEDE 源码
+        run: |
+          git clone -b $LEDE_BRANCH $LEDE_URL lede
+          cd ledde
+
+      - name: 修改默认后台IP为 192.168.99.1
+        run: |
+          cd lede
+          sed -i "s/192.168.1.1/$ROUTER_IP/g" package/base-files/files/bin/config_generate
+
+      - name: 更新插件源
+        run: |
+          cd lede
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 写入新路由3专属配置
+        run: |
+          cd lede
+          cat > .config << 'EOF'
+CONFIG_TARGET_ramips=y
+CONFIG_TARGET_ramips_mt7621=y
+CONFIG_TARGET_ramips_mt7621_DEVICE_newifi_d2=y
+CONFIG_BUILD_PATENTED=y
+CONFIG_CLEAN_IPKG=y
+CONFIG_LIBCURL_COOKIES=y
+CONFIG_LIBCURL_FILE=y
+CONFIG_LIBCURL_FTP=y
+CONFIG_LIBCURL_HTTP=y
+CONFIG_LIBCURL_HTTPS=y
+CONFIG_LIBCURL_MBEDTLS=y
+CONFIG_LIBCURL_PROXY=y
+CONFIG_PACKAGE_kmod-usb-storage=y
+CONFIG_PACKAGE_kmod-usb-ohci=y
+CONFIG_PACKAGE_kmod-usb-uhci=y
+CONFIG_PACKAGE_kmod-usb3=y
+CONFIG_PACKAGE_kmod-usb-xhci=y
+CONFIG_PACKAGE_kmod-usb-net=y
+CONFIG_PACKAGE_kmod-usb-net-rndis=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
+CONFIG_PACKAGE_kmod-fs-ext4=y
+CONFIG_PACKAGE_kmod-fs-ntfs3=y
+CONFIG_PACKAGE_kmod-fs-vfat=y
+CONFIG_PACKAGE_kmod-nls-cp936=y
+CONFIG_PACKAGE_kmod-nls-utf8=y
+CONFIG_PACKAGE_kmod-mt7603=y
+CONFIG_PACKAGE_kmod-mt7612=y
+CONFIG_PACKAGE_wpad-full=y
+CONFIG_PACKAGE_iw=y
+CONFIG_PACKAGE_iwinfo=y
+CONFIG_PACKAGE_luci-app-p910nd=y
+CONFIG_PACKAGE_p910nd=y
+CONFIG_PACKAGE_luci-app-samba4=y
+CONFIG_PACKAGE_samba4-server=y
+CONFIG_PACKAGE_luci-theme-argon=y
+CONFIG_PACKAGE_luci-theme-bootstrap=y
+CONFIG_PACKAGE_luci-compat=y
+CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_wget=y
+CONFIG_PACKAGE_nano=y
+CONFIG_PACKAGE_openssh-sftp-server=y
+EOF
+          make defconfig
+
+      - name: 开始编译固件
+        run: |
+          cd lede
+          make -j$(nproc) download
+          make -j$(nproc)
+
+      - name: 上传编译好的固件
+        uses: actions/upload-artifact@main
+        with:
+          name: 新路由3-LEDE全能版_192.168.99.1
+          path: lede/bin/targets/ramips/mt7621/*.bin
