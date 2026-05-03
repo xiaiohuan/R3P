@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 env:
-  QWRT_URL: https://github.com/QiuSimons/OpenWrt-QuickStart.git
+  QWRT_URL: https://github.com/kiddin9/kwrt.git
   QWRT_BRANCH: master
   ROUTER_IP: 192.168.99.1
 
@@ -29,15 +29,15 @@ jobs:
           cd qwrt
           sed -i "s/192.168.1.1/$ROUTER_IP/g" package/base-files/files/bin/config_generate
 
-      - name: 无线&USB3.0优化
+      - name: 无线&USB3.0优化补丁
         run: |
           cd qwrt
-          # USB3.0 抗干扰补丁
-          echo 'mt7621-usb3-disable-phy-algo' >> target/linux/ramips/patches-5.10/999-usb3-fix.patch
-          sed -i '/set usb3=/c\set usb3="1"' target/linux/ramips/mt7621/base-files/etc/init.d/bootcount
+          # USB3.0 抗干扰 & 全速优化
+          echo 'mt7621-usb3-disable-phy-algo' >> target/linux/ramips/patches-5.10/999-usb3-fix.patch || true
+          sed -i '/set usb3=/c\set usb3="1"' target/linux/ramips/mt7621/base-files/etc/init.d/bootcount || true
           # 无线功率拉满
-          sed -i 's/option txpower .*/option txpower 30/' package/network/services/wpad/files/wpad.config
-          sed -i 's/maxpower=.*/maxpower=30/' package/kernel/mt76/Makefile
+          sed -i 's/option txpower .*/option txpower 30/' package/network/services/wpad/files/wpad.config || true
+          sed -i 's/maxpower=.*/maxpower=30/' package/kernel/mt76/Makefile || true
 
       - name: 更新 feeds
         run: |
@@ -48,51 +48,49 @@ jobs:
       - name: 写入新路由3完整配置
         run: |
           cd qwrt
-          cat > .config << 'EOF'
-CONFIG_TARGET_ramips=y
-CONFIG_TARGET_ramips_mt7621=y
-CONFIG_TARGET_ramips_mt7621_DEVICE_newifi_d2=y
-CONFIG_BUILD_PATENTED=y
-CONFIG_CLEAN_IPKG=y
-CONFIG_LIBCURL_COOKIES=y
-CONFIG_LIBCURL_FILE=y
-CONFIG_LIBCURL_FTP=y
-CONFIG_LIBCURL_HTTP=y
-CONFIG_LIBCURL_HTTPS=y
-CONFIG_LIBCURL_MBEDTLS=y
-CONFIG_LIBCURL_PROXY=y
-CONFIG_PACKAGE_kmod-usb-storage=y
-CONFIG_PACKAGE_kmod-usb-ohci=y
-CONFIG_PACKAGE_kmod-usb-uhci=y
-CONFIG_PACKAGE_kmod-usb3=y
-CONFIG_PACKAGE_kmod-usb-xhci=y
-CONFIG_PACKAGE_kmod-usb-net=y
-CONFIG_PACKAGE_kmod-usb-net-rndis=y
-CONFIG_PACKAGE_kmod-fs-ext4=y
-CONFIG_PACKAGE_kmod-fs-ntfs3=y
-CONFIG_PACKAGE_kmod-fs-vfat=y
-CONFIG_PACKAGE_kmod-nls-cp936=y
-CONFIG_PACKAGE_kmod-nls-utf8=y
-CONFIG_PACKAGE_kmod-mt7603=y
-CONFIG_PACKAGE_kmod-mt7612=y
-CONFIG_PACKAGE_wpad-full=y
-CONFIG_PACKAGE_luci-app-p910nd=y
-CONFIG_PACKAGE_p910nd=y
-CONFIG_PACKAGE_luci-app-samba4=y
-CONFIG_PACKAGE_samba4-server=y
-CONFIG_PACKAGE_luci-theme-argon=y
-CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
-CONFIG_PACKAGE_luci-app-openclash=y
-CONFIG_PACKAGE_luci-app-ddns=y
-CONFIG_PACKAGE_luci-app-campus=y
-CONFIG_PACKAGE_curl=y
-CONFIG_PACKAGE_wget=y
-CONFIG_PACKAGE_nano=y
-CONFIG_PACKAGE_openssh-sftp-server=y
-EOF
+          echo "CONFIG_TARGET_ramips=y" > .config
+          echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
+          echo "CONFIG_TARGET_ramips_mt7621_DEVICE_newifi_d2=y" >> .config
+          echo "CONFIG_BUILD_PATENTED=y" >> .config
+          echo "CONFIG_CLEAN_IPKG=y" >> .config
+          echo "CONFIG_LIBCURL_COOKIES=y" >> .config
+          echo "CONFIG_LIBCURL_FILE=y" >> .config
+          echo "CONFIG_LIBCURL_FTP=y" >> .config
+          echo "CONFIG_LIBCURL_HTTP=y" >> .config
+          echo "CONFIG_LIBCURL_HTTPS=y" >> .config
+          echo "CONFIG_LIBCURL_MBEDTLS=y" >> .config
+          echo "CONFIG_LIBCURL_PROXY=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-ohci=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-uhci=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb3=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-xhci=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-net=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-net-rndis=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-fs-ext4=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-fs-ntfs3=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-fs-vfat=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-nls-cp936=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-nls-utf8=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-mt7603=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-mt7612=y" >> .config
+          echo "CONFIG_PACKAGE_wpad-full=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-p910nd=y" >> .config
+          echo "CONFIG_PACKAGE_p910nd=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
+          echo "CONFIG_PACKAGE_samba4-server=y" >> .config
+          echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
+          echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-ddns=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-campus=y" >> .config
+          echo "CONFIG_PACKAGE_curl=y" >> .config
+          echo "CONFIG_PACKAGE_wget=y" >> .config
+          echo "CONFIG_PACKAGE_nano=y" >> .config
+          echo "CONFIG_PACKAGE_openssh-sftp-server=y" >> .config
           make defconfig
 
-      - name: 下载依赖
+      - name: 下载编译依赖
         run: |
           cd qwrt
           make -j$(nproc) download
