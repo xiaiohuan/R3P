@@ -1,36 +1,43 @@
-name: 编译新路由3-LEDE全能版
-
+name: 新路由3 LEDE全能版 无线满速+USB3.0优化
 on:
   workflow_dispatch:
 
 env:
-  # LEDE 官方源码
   LEDE_URL: https://github.com/coolsnowwolf/lede
   LEDE_BRANCH: master
-  # 固件后台IP
   ROUTER_IP: 192.168.99.1
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: 拉取仓库代码
-        uses: actions/checkout@main
+      - name: 检出仓库
+        uses: actions/checkout@v4
 
       - name: 安装编译依赖
         run: |
-          sudo apt update
-          sudo apt install -y build-essential libncurses5-dev git time libssl-dev python3-pip unzip curl wget rsync
+          sudo apt update -y
+          sudo apt install -y build-essential libncurses5-dev git libssl-dev python3 unzip curl wget rsync time
 
       - name: 克隆 LEDE 源码
         run: |
           git clone -b $LEDE_BRANCH $LEDE_URL lede
-          cd ledde
+          cd lede
 
-      - name: 修改默认后台IP为 192.168.99.1
+      - name: 修改后台IP为 192.168.99.1
         run: |
           cd lede
           sed -i "s/192.168.1.1/$ROUTER_IP/g" package/base-files/files/bin/config_generate
+
+      - name: 加入无线功率拉满 + USB3.0抗干扰优化
+        run: |
+          cd lede
+          # USB3.0 抗干扰、全速补丁
+          echo 'mt7621-usb3-disable-phy-algo' >> target/linux/ramips/patches-5.10/999-usb3-fix.patch
+          sed -i '/set usb3=/c\set usb3="1"' target/linux/ramips/mt7621/base-files/etc/init.d/bootcount
+          # 无线发射功率拉满
+          sed -i 's/option txpower .*/option txpower 30/' package/network/services/wpad/files/wpad.config
+          sed -i 's/maxpower=.*/maxpower=30/' package/kernel/mt76/Makefile
 
       - name: 更新插件源
         run: |
@@ -38,7 +45,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 写入新路由3专属配置
+      - name: 写入新路由3完整配置
         run: |
           cd lede
           cat > .config << 'EOF'
@@ -87,14 +94,18 @@ CONFIG_PACKAGE_openssh-sftp-server=y
 EOF
           make defconfig
 
-      - name: 开始编译固件
+      - name: 下载编译依赖
         run: |
           cd lede
           make -j$(nproc) download
+
+      - name: 正式编译固件
+        run: |
+          cd lede
           make -j$(nproc)
 
-      - name: 上传编译好的固件
-        uses: actions/upload-artifact@main
+      - name: 上传固件成品
+        uses: actions/upload-artifact@v4
         with:
-          name: 新路由3-LEDE全能版_192.168.99.1
+          name: 新路由3_LEDE全能版_无线满速_USB3.0优化
           path: lede/bin/targets/ramips/mt7621/*.bin
